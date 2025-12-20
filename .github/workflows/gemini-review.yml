@@ -7,16 +7,21 @@ jobs:
   gemini-gatekeeper:
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write # Allows Gemini to post comments
-      contents: read       # Allows Gemini to read the code
+      pull-requests: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # FIX: Required to see full history for git diff
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.12' # UPGRADE: Avoids the deprecation warning
+
       - name: Install Dependencies
-        run: pip install google-generativeai
+        run: pip install google-genai requests # NEW: Using the latest SDK
+
       - name: Run Review Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
