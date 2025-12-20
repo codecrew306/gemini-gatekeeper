@@ -3,28 +3,38 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+# This prevents multiple reviews from running at the same time on the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   gemini-gatekeeper:
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
-      contents: read
+      pull-requests: write # Required to post comments
+      contents: read       # Required to checkout the code
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # FIX: Required to see full history for git diff
+          fetch-depth: 0 # Ensures we have history to compare main vs. branch
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 # Upgraded to v5 (best for 2025)
         with:
-          python-version: '3.12' # UPGRADE: Avoids the deprecation warning
+          python-version: '3.12'
+          cache: 'pip' # Automatically caches your dependencies for speed
 
       - name: Install Dependencies
-        run: pip install google-genai requests # NEW: Using the latest SDK
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-genai requests
 
-      - name: Run Review Script
+      - name: Run Gemini Review
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }} # This must match your GitHub Secret name
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: python .github/scripts/gemini_review.py
