@@ -1,0 +1,14 @@
+name: Weekly Code Health Check
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Runs every Sunday at midnight
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gemini Architect Review
+        run: |
+          # Use a script similar to your PR script, but point it 
+          # at the whole SRC folder instead of just a 'git diff'
